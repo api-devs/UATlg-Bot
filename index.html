@@ -46,7 +46,7 @@
     const initData = tg.initDataUnsafe;
 
     // Автоматическая проверка IP через backend
-    fetch('https://твой-backend.vercel.app/api/verify-ip', {
+    fetch('https://ua-tlg-bot.vercel.app/api/verify-ip', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ initData: tg.initData })
