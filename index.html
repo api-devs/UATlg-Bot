@@ -1,0 +1,97 @@
+﻿<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Верифікація Україна</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            text-align: center;
+            background: #f0f0f0;
+        }
+
+        h1 {
+            color: #0057b7;
+        }
+
+        button {
+            padding: 15px;
+            font-size: 18px;
+            margin: 10px;
+            border: none;
+            border-radius: 10px;
+            background: #ffd700;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>🇺🇦 Верифікація</h1>
+    <p>Перевіряємо вашу країну автоматично...</p>
+    <div id="loading">Зачекайте...</div>
+
+    <button id="phoneBtn" class="hidden">📱 Поділитися номером телефону</button>
+    <button id="geoBtn" class="hidden">📍 Поділитися геолокацією</button>
+
+    <script>Telegram.WebApp.ready();
+    Telegram.WebApp.expand();
+
+    const tg = window.Telegram.WebApp;
+    const initData = tg.initDataUnsafe;
+
+    // Автоматическая проверка IP через backend
+    fetch('https://твой-backend.vercel.app/api/verify-ip', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ initData: tg.initData })
+    })
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById('loading').remove();
+      if (data.fromUkraine) {
+        tg.sendData(JSON.stringify({ success: true }));
+        tg.close();
+      } else {
+        // Fallback
+        document.getElementById('phoneBtn').classList.remove('hidden');
+        document.getElementById('geoBtn').classList.remove('hidden');
+      }
+    })
+    .catch(() => {
+      document.getElementById('loading').textContent = 'Помилка. Спробуйте альтернативу:';
+      document.getElementById('phoneBtn').classList.remove('hidden');
+      document.getElementById('geoBtn').classList.remove('hidden');
+    });
+
+    // Кнопка номера телефона
+    document.getElementById('phoneBtn').onclick = () => {
+      tg.requestContact((success, contact) => {
+        if (success && contact.phone_number.startsWith('+380')) {
+          tg.sendData(JSON.stringify({ success: true }));
+        } else {
+          alert('Номер має бути українським (+380)');
+        }
+      });
+    };
+
+    // Кнопка геолокации
+    document.getElementById('geoBtn').onclick = () => {
+      navigator.geolocation.getCurrentPosition(pos => {
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+        // Приблизні кордони України
+        if (lat >= 44 && lat <= 52.5 && lon >= 22 && lon <= 40.5) {
+          tg.sendData(JSON.stringify({ success: true }));
+        } else {
+          alert('Локація не в межах України');
+        }
+      }, () => alert('Не вдалося отримати локацію'));
+    };</script>
+</body>
+</html>
